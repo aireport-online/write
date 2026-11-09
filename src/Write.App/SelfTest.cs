@@ -230,6 +230,26 @@ internal static class SelfTest
         Screenshot(window, Path.Combine(outDir, "2-stijlen.png"), log);
         window.OpenStyleList(false);
 
+        // Printing lays the document out on pages: the page break must give at least two.
+        var paginator = window.CreatePaginator();
+        paginator.ComputePageCount();
+        Check(paginator.PageCount >= 2, $"print layout has {paginator.PageCount} pages", log);
+
+        // Other formats: rich text and plain text can be written and read back.
+        foreach (var extension in new[] { ".rtf", ".txt" })
+        {
+            var other = Path.Combine(outDir, "selftest-new" + extension);
+            Check(window.SaveTo(other), "save as " + extension, log);
+            Check(window.OpenPath(other), "open " + extension, log);
+            var text = new TextRange(window.EditorBox.Document.ContentStart, window.EditorBox.Document.ContentEnd).Text;
+            Check(text.Contains("Projectplan Write") && text.Contains("Behoudt wat Word schreef"), extension + " keeps the text", log);
+        }
+        Check(window.OpenPath(newPath), "reopen the saved document", log);
+        Idle(window);
+        editor = window.EditorBox;
+        inserted = editor.Document.Blocks.OfType<Table>().First();
+        Check(Describe(DocxReader.Read(DocxWriter.Write(window.CurrentModel()))) == Describe(model), "reopened document is identical to what was saved", log);
+
         // Table editing on this document.
         editor.CaretPosition = inserted.RowGroups[0].Rows[1].Cells[1].ContentStart.GetInsertionPosition(LogicalDirection.Forward);
         window.InsertRow(below: true);

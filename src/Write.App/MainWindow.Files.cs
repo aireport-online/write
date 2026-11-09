@@ -338,11 +338,7 @@ public partial class MainWindow
             }
             if (!toPdf && dialog.ShowDialog() != true) return;
 
-            // Print from a fresh copy laid out on real pages; the editor's own document stays as it is.
-            var model = CurrentModel();
-            var flow = new FlowBuilder(model, forPrint: true).Build();
-            var paginator = ((IDocumentPaginatorSource)flow).DocumentPaginator;
-            paginator.PageSize = new Size(FlowFormat.Dip(_page.Width), FlowFormat.Dip(_page.Height));
+            var paginator = CreatePaginator();
             var title = _path != null ? Path.GetFileNameWithoutExtension(_path) : "Document";
             dialog.PrintDocument(paginator, title);
         }
@@ -350,6 +346,15 @@ public partial class MainWindow
         {
             MessageBox.Show(this, $"Afdrukken is niet gelukt.\n\n{ex.Message}", "Write", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
+    }
+
+    /// <summary>Lays the current document out on real pages, from a fresh copy; the editor's own document stays as it is.</summary>
+    internal DocumentPaginator CreatePaginator()
+    {
+        var flow = new FlowBuilder(CurrentModel(), forPrint: true).Build();
+        var paginator = ((IDocumentPaginatorSource)flow).DocumentPaginator;
+        paginator.PageSize = new Size(FlowFormat.Dip(_page.Width), FlowFormat.Dip(_page.Height));
+        return paginator;
     }
 
     private void Editor_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
