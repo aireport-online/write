@@ -176,6 +176,8 @@ def offerte():
         section.top_margin = section.bottom_margin = Cm(2.5)
     d.styles["Normal"].font.name = "Calibri"
     d.styles["Normal"].font.size = Pt(11)
+    for lang in d.styles.element.xpath("//w:rPrDefault/w:rPr/w:lang"):
+        lang.set(qn("w:val"), "nl-NL")  # a Dutch document, as Word would mark it
 
     header = d.sections[0].header.paragraphs[0]
     header.text = "Bakker Webdesign  ·  Dorpsstraat 12, Utrecht"

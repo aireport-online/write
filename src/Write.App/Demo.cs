@@ -30,7 +30,9 @@ internal static class Demo
         Settings.Current.WindowWidth = 1240;
         Settings.Current.WindowHeight = 880;
         Settings.Current.Maximized = false;
-        Settings.Current.Zoom = 1.0;
+        Settings.Current.Zoom = 1.2;
+        // The recording machine has no Dutch dictionary; without this every word would be underlined.
+        Settings.Current.SpellCheck = false;
 
         var window = new MainWindow
         {
@@ -133,6 +135,9 @@ internal static class Demo
             Caption("Typ een titel en kies een stijl");
             Type("otulen teamoverleg");
             Wait(500);
+            Log("language of typed text: " + Ui(() => string.Join(", ", FlowWalker.Paragraphs(editor.Document.Blocks)
+                .SelectMany(p => FlowWalker.Runs(p.Inlines))
+                .Select(r => r.ReadLocalValue(FrameworkContentElement.LanguageProperty) == DependencyProperty.UnsetValue ? "(document)" : r.Language.IetfLanguageTag))));
             PickStyle("Titel");
             Enter();
             Type("Maandag 9 november 2026");
@@ -180,6 +185,8 @@ internal static class Demo
             for (int c = 0; c < 3; c++)
             {
                 int row = r, col = c;
+                Ui(() => Cell(editor, row, col)?.BringIntoView());
+                Wait(150);
                 Click(() => CellPoint(editor, row, col), () => editor.CaretPosition = Cell(editor, row, col)!.ContentStart.GetInsertionPosition(LogicalDirection.Forward));
                 Type(cells[r, c]);
                 Wait(150);
@@ -282,6 +289,8 @@ internal static class Demo
                 }
                 throw new InvalidOperationException("Word not found: " + word);
             });
+            Ui(() => start.Paragraph?.BringIntoView());
+            Wait(150);
             DoubleClick(() =>
             {
                 var a = start.GetCharacterRect(LogicalDirection.Forward);
@@ -416,11 +425,13 @@ internal static class Demo
                         Padding = new Thickness(20, 10, 20, 11),
                         HorizontalAlignment = HorizontalAlignment.Center,
                         VerticalAlignment = VerticalAlignment.Bottom,
-                        Margin = new Thickness(0, 0, 0, 22),
+                        Margin = new Thickness(0, 0, 0, 9),
                         IsHitTestVisible = false,
                         Child = _caption,
                     };
                     Panel.SetZIndex(_captionBox, 1000);
+                    // Keep a band free under the page so the caption never covers the text.
+                    _window.Scroller.Margin = new Thickness(0, 0, 0, 62);
                     _window.Workspace.Children.Add(_captionBox);
                 }
                 _caption.Text = text;

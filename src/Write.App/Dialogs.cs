@@ -64,6 +64,8 @@ internal sealed class FormDialog : Window
     public int AddText(string label, string value = "")
     {
         var box = new TextBox { Text = value };
+        // Moving to a field with the keyboard selects its contents, so typing replaces the value.
+        box.GotKeyboardFocus += (_, _) => box.SelectAll();
         AddRow(label, box);
         _values.Add(() => box.Text);
         return _values.Count - 1;
