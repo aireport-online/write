@@ -5,6 +5,9 @@ Write is een native Windows-toepassing (C# / .NET / WPF): geen browser, geen Ele
 
 ![Write met een nieuw document](docs/screenshots/1-nieuw-document.png)
 
+**[Bekijk de video (2 minuten)](docs/write-demo.mp4)**: typen, stijlen, lijsten, opmaak, een tabel,
+zoeken en vervangen, opslaan en een bestaand Word-document openen.
+
 ## Wat het kan
 
 - **Word-documenten openen en opslaan** (`.docx`), plus `.rtf` en `.txt`.
@@ -87,6 +90,9 @@ De toepassing draait alleen op Windows. De DOCX-engine en zijn tests draaien ook
 | `tests/Write.Core.Tests` | Tests op documenten van Word-compatibele bronnen (python-docx, pandoc, LibreOffice), inclusief schemavalidatie. |
 | `tests/fixtures` | Testdocumenten en het script dat ze maakt. |
 | `installer` | Inno Setup-script. |
+
+`Write.exe --demo <map> <document.docx>` speelt de rondleiding uit de video af: de toepassing wordt
+met echte muis- en toetsenbordinvoer bediend. De workflow *Demo video* neemt dat op Windows op.
 
 `Write.exe --selftest <document.docx> <map>` laat de toepassing zichzelf testen: typen, opmaken,
 tabel invoegen, opslaan, een bestaand document openen en ongewijzigd terugschrijven. De build
