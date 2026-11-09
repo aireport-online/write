@@ -14,6 +14,9 @@ public sealed class DocxPackage
 
     public const string ContentTypesPath = "[Content_Types].xml";
 
+    /// <summary>Upper bound on the unpacked size of a document; guards against decompression bombs.</summary>
+    private const long MaxUnpackedBytes = 1L << 30;
+
     public IReadOnlyList<string> Paths => _order;
 
     public static DocxPackage Load(byte[] data)
@@ -31,13 +34,22 @@ public sealed class DocxPackage
         }
         using (zip)
         {
+            long total = 0;
+            var chunk = new byte[81920];
             foreach (var entry in zip.Entries)
             {
                 var name = entry.FullName.Replace('\\', '/').TrimStart('/');
                 if (name.Length == 0 || name.EndsWith('/')) continue;
                 using var es = entry.Open();
                 using var buffer = new MemoryStream();
-                es.CopyTo(buffer);
+                int read;
+                while ((read = es.Read(chunk, 0, chunk.Length)) > 0)
+                {
+                    total += read;
+                    if (total > MaxUnpackedBytes)
+                        throw new DocxFormatException("Het document is uitgepakt te groot om te openen.");
+                    buffer.Write(chunk, 0, read);
+                }
                 pkg.Set(name, buffer.ToArray());
             }
         }

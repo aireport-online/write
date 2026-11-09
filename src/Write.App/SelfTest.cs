@@ -224,6 +224,7 @@ internal static class SelfTest
         Check(Find("Bijlage").BreakBefore && Find("Bijlage").Props.StyleId == Id("heading 1"), "page break and heading saved", log);
 
         editor.CaretPosition = editor.Document.ContentStart;
+        window.ScrollToTop();
         Screenshot(window, Path.Combine(outDir, "1-nieuw-document.png"), log);
         window.OpenStyleList(true);
         Screenshot(window, Path.Combine(outDir, "2-stijlen.png"), log);
@@ -284,6 +285,7 @@ internal static class SelfTest
                 log.AppendLine(FirstDifference(direct, viaEditor));
             }
             Check(direct == viaEditor, "untouched document is unchanged after passing through the editor", log);
+            window.ScrollToTop();
             Screenshot(window, Path.Combine(outDir, "3-bestaand-document.png"), log);
             window.ShowFindBar("pagina");
             window.FindStep(forward: true);

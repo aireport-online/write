@@ -338,6 +338,8 @@ public partial class MainWindow : Window
         UpdateToolbarState();
     }
 
+    internal void ScrollToTop() => Scroller.ScrollToHome();
+
     /// <summary>Does what pressing Enter does, including the bookkeeping that follows it.</summary>
     internal void PressEnter()
     {

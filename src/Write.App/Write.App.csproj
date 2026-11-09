@@ -17,6 +17,5 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Assets\write.ico" />
-    <InternalsVisibleTo Include="Write.App.Tests" />
   </ItemGroup>
 </Project>
