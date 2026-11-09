@@ -47,6 +47,90 @@ internal static class Demo
         thread.Start();
     }
 
+    /// <summary>
+    /// A pointer drawn on top of everything. A machine without a mouse hides the real one, and a
+    /// recording without a pointer does not show where the clicks go.
+    /// </summary>
+    private sealed class PointerOverlay : Window
+    {
+        private const double HotSpot = 28;
+        private readonly System.Windows.Shapes.Ellipse _ripple;
+        private IntPtr _handle;
+
+        public PointerOverlay()
+        {
+            WindowStyle = WindowStyle.None;
+            AllowsTransparency = true;
+            Background = Brushes.Transparent;
+            ShowInTaskbar = false;
+            ShowActivated = false;
+            Topmost = true;
+            Focusable = false;
+            IsHitTestVisible = false;
+            ResizeMode = ResizeMode.NoResize;
+            Width = Height = HotSpot * 2;
+            WindowStartupLocation = WindowStartupLocation.Manual;
+
+            _ripple = new System.Windows.Shapes.Ellipse
+            {
+                Width = 40, Height = 40, Opacity = 0,
+                Fill = new SolidColorBrush(Color.FromArgb(120, 15, 118, 110)),
+                Stroke = new SolidColorBrush(Color.FromRgb(15, 118, 110)), StrokeThickness = 1.5,
+                RenderTransformOrigin = new Point(0.5, 0.5), RenderTransform = new ScaleTransform(0.3, 0.3),
+            };
+            Canvas.SetLeft(_ripple, HotSpot - 20);
+            Canvas.SetTop(_ripple, HotSpot - 20);
+
+            var arrow = new System.Windows.Shapes.Path
+            {
+                Data = Geometry.Parse("M0,0 L0,17 L4.2,13.2 L7.2,19.6 L9.8,18.4 L6.9,12.2 L12.4,12.2 Z"),
+                Fill = Brushes.White, Stroke = Brushes.Black, StrokeThickness = 1.1, StrokeLineJoin = PenLineJoin.Round,
+                RenderTransform = new ScaleTransform(1.25, 1.25),
+                Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 3, ShadowDepth = 1, Opacity = 0.35 },
+            };
+            Canvas.SetLeft(arrow, HotSpot);
+            Canvas.SetTop(arrow, HotSpot);
+
+            var canvas = new Canvas();
+            canvas.Children.Add(_ripple);
+            canvas.Children.Add(arrow);
+            Content = canvas;
+
+            SourceInitialized += (_, _) =>
+            {
+                // Click-through and never activated: input goes to whatever is underneath.
+                _handle = new WindowInteropHelper(this).Handle;
+                int style = GetWindowLong(_handle, -20);
+                SetWindowLong(_handle, -20, style | 0x20 /* transparent */ | 0x80 /* tool window */ | 0x08000000 /* no activate */);
+            };
+        }
+
+        /// <summary>Places the pointer at a screen position (device pixels) and keeps it above other windows.</summary>
+        public void MoveTo(int x, int y)
+        {
+            var source = PresentationSource.FromVisual(this);
+            var toDip = source?.CompositionTarget?.TransformFromDevice ?? Matrix.Identity;
+            var p = toDip.Transform(new Point(x, y));
+            Left = p.X - HotSpot;
+            Top = p.Y - HotSpot;
+            if (_handle != IntPtr.Zero) SetWindowPos(_handle, new IntPtr(-1), 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010);
+        }
+
+        public void Ripple()
+        {
+            var duration = new Duration(TimeSpan.FromMilliseconds(420));
+            var scale = (ScaleTransform)_ripple.RenderTransform;
+            var grow = new System.Windows.Media.Animation.DoubleAnimation(0.3, 1.25, duration);
+            scale.BeginAnimation(ScaleTransform.ScaleXProperty, grow);
+            scale.BeginAnimation(ScaleTransform.ScaleYProperty, grow);
+            _ripple.BeginAnimation(OpacityProperty, new System.Windows.Media.Animation.DoubleAnimation(0.9, 0, duration));
+        }
+
+        [DllImport("user32.dll")] private static extern int GetWindowLong(IntPtr hwnd, int index);
+        [DllImport("user32.dll")] private static extern int SetWindowLong(IntPtr hwnd, int index, int value);
+        [DllImport("user32.dll")] private static extern bool SetWindowPos(IntPtr hwnd, IntPtr after, int x, int y, int cx, int cy, uint flags);
+    }
+
     private sealed class Driver
     {
         private readonly Application _app;
@@ -58,6 +142,7 @@ internal static class Demo
         private TextBlock? _caption;
         private Border? _captionBox;
         private bool _direct; // input cannot be delivered: perform actions directly
+        private PointerOverlay? _pointer;
 
         public Driver(Application app, MainWindow window, string outDir, string? sample)
         {
@@ -82,6 +167,13 @@ internal static class Demo
             try
             {
                 Wait(1200);
+                _app.Dispatcher.Invoke(() =>
+                {
+                    _pointer = new PointerOverlay();
+                    _pointer.Show();
+                    GetCursorPos(out POINT at);
+                    _pointer.MoveTo(at.X, at.Y);
+                });
                 WriteRegion();
                 var go = Path.Combine(_outDir, "go.txt");
                 for (int i = 0; i < 300 && !File.Exists(go); i++) Wait(100);
@@ -99,6 +191,7 @@ internal static class Demo
                 try { File.WriteAllText(Path.Combine(_outDir, "demo.log"), _log.ToString()); } catch (IOException) { }
                 _app.Dispatcher.Invoke(() =>
                 {
+                    _pointer?.Close();
                     foreach (var w in _app.Windows.OfType<MainWindow>().ToList()) w.DiscardChanges();
                     _app.Shutdown(exit);
                 });
@@ -474,7 +567,9 @@ internal static class Demo
             {
                 double t = i / (double)steps;
                 double eased = t * t * (3 - 2 * t);
-                SetCursorPos((int)Math.Round(from.X + (target.X - from.X) * eased), (int)Math.Round(from.Y + (target.Y - from.Y) * eased));
+                int x = (int)Math.Round(from.X + (target.X - from.X) * eased), y = (int)Math.Round(from.Y + (target.Y - from.Y) * eased);
+                SetCursorPos(x, y);
+                _app.Dispatcher.BeginInvoke(new Action(() => _pointer?.MoveTo(x, y)));
                 Wait(14);
             }
         }
@@ -491,6 +586,7 @@ internal static class Demo
         {
             MoveTo(Ui(where));
             Wait(160);
+            ShowClick();
             if (!_direct)
             {
                 Mouse(MOUSEEVENTF_LEFTDOWN);
@@ -501,10 +597,13 @@ internal static class Demo
             Wait(260);
         }
 
+        private void ShowClick() => _app.Dispatcher.BeginInvoke(new Action(() => _pointer?.Ripple()));
+
         private void DoubleClick(Func<Point> where)
         {
             MoveTo(Ui(where));
             Wait(160);
+            ShowClick();
             if (_direct) return;
             for (int i = 0; i < 2; i++)
             {
