@@ -199,6 +199,13 @@ public sealed class StyleSheet
         return lvl is >= 0 and <= 8 ? lvl + 1 : null;
     }
 
+    /// <summary>
+    /// True when paragraphs of this style leave no space between each other
+    /// ("Don't add space between paragraphs of the same style"), as list paragraphs do.
+    /// </summary>
+    public bool HasContextualSpacing(string? styleId, string? tableStyleId = null) =>
+        ParaChain(styleId, tableStyleId).ContextualSpacing ?? false;
+
     public string? HeadingStyleId(int level) => FindByName("heading " + level)?.Id;
 
     public TableBorders? TableStyleBorders(string? tableStyleId)

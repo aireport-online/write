@@ -180,6 +180,7 @@ internal sealed class ParaPartial
     public string? NumId;
     public int? Ilvl;
     public int? OutlineLvl;
+    public bool? ContextualSpacing;
 
     public ParaPartial Clone() => (ParaPartial)MemberwiseClone();
 
@@ -200,6 +201,7 @@ internal sealed class ParaPartial
         r.NumId = over.NumId ?? r.NumId;
         r.Ilvl = over.Ilvl ?? r.Ilvl;
         r.OutlineLvl = over.OutlineLvl ?? r.OutlineLvl;
+        r.ContextualSpacing = over.ContextualSpacing ?? r.ContextualSpacing;
         return r;
     }
 
@@ -277,6 +279,7 @@ internal sealed class ParaPartial
         }
 
         p.OutlineLvl = pPr.W("outlineLvl").WInt("val");
+        p.ContextualSpacing = X.OnOff(pPr.W("contextualSpacing"));
         return p;
     }
 }

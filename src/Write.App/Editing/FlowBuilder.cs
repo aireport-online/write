@@ -65,7 +65,7 @@ internal sealed class FlowBuilder
                     i = AddList(target, blocks, i, tableStyle);
                     break;
                 case Para p:
-                    target.Add(BuildParagraph(p, tableStyle, inList: false));
+                    target.Add(BuildParagraph(p, tableStyle, inList: false, Neighbour(blocks, i - 1), Neighbour(blocks, i + 1)));
                     i++;
                     break;
                 case TableBlock t:
@@ -99,7 +99,7 @@ internal sealed class FlowBuilder
             {
                 var item = stack.Count > 0 ? stack[^1].List.ListItems.LastListItem : null;
                 if (item == null) break;
-                item.Blocks.Add(BuildParagraph(p, tableStyle, inList: true));
+                item.Blocks.Add(BuildParagraph(p, tableStyle, inList: true, Neighbour(blocks, i - 1), Neighbour(blocks, i + 1)));
                 continue;
             }
 
@@ -128,19 +128,31 @@ internal sealed class FlowBuilder
                 stack.Add((list, key));
             }
 
-            stack[^1].List.ListItems.Add(new ListItem(BuildParagraph(p, tableStyle, inList: true)));
+            stack[^1].List.ListItems.Add(new ListItem(BuildParagraph(p, tableStyle, inList: true, Neighbour(blocks, i - 1), Neighbour(blocks, i + 1))));
         }
         return Math.Max(i, start + 1);
     }
 
     // ---- paragraphs ------------------------------------------------------------------------
 
-    private Paragraph BuildParagraph(Para p, string? tableStyle, bool inList)
+    private static Para? Neighbour(IReadOnlyList<MBlock> blocks, int index) =>
+        index >= 0 && index < blocks.Count ? blocks[index] as Para : null;
+
+    private Paragraph BuildParagraph(Para p, string? tableStyle, bool inList, Para? previous, Para? next)
     {
         var para = new Paragraph();
         var styleId = ValidStyle(p.Props.StyleId);
         var baseRun = _doc.Styles.ResolveRun(styleId, null, tableStyle);
         FlowFormat.ApplyPara(para, p.Props, baseRun, inList);
+
+        // Styles such as List Paragraph leave no space between neighbours of the same style.
+        if (_doc.Styles.HasContextualSpacing(styleId, tableStyle))
+        {
+            if (previous != null && ValidStyle(previous.Props.StyleId) == styleId) para.Padding = new Thickness(0);
+            if (next != null && ValidStyle(next.Props.StyleId) == styleId)
+                para.Margin = new Thickness(para.Margin.Left, 0, para.Margin.Right, 0);
+        }
+
         bool breakBefore = p.BreakBefore || p.Props.PageBreakBefore;
         if (_print) para.BreakPageBefore = breakBefore;
         else if (breakBefore) FlowFormat.SetPageBreak(para, true);

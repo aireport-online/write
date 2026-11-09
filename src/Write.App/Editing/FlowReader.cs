@@ -195,9 +195,21 @@ internal sealed class FlowReader
             result.Props = cur with { PageBreakBefore = false };
         }
 
+        // A list made in the editor shows its items without space between them; the List Paragraph
+        // style gives exactly that in Word, so such items are saved with it.
+        if (inList && styleId == null && (double.IsNaN(para.Margin.Bottom) || double.IsNaN(para.Margin.Top)) &&
+            _doc.Styles.EnsureBuiltIn("List Paragraph") is { } listStyle)
+        {
+            result.Props = _doc.Styles.ResolvePara(listStyle, tableStyle) with { IndLeft = 0, IndFirst = 0, PageBreakBefore = false };
+            result.RawPPr = WithoutEverythingButSection(result.RawPPr);
+            result.Loaded = null;
+        }
+
         ReadInlines(para.Inlines, result.Inlines, null, false, false);
         return result;
     }
+
+    private static XElement? WithoutEverythingButSection(XElement? pPr) => SectionOnly(pPr);
 
     private void ReadInlines(IEnumerable<WInline> source, List<MInline> output, string? link, bool underline, bool strike)
     {

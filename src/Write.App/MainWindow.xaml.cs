@@ -38,6 +38,7 @@ public partial class MainWindow : Window
 
         InitFormatControls();
         Editor.AddHandler(Hyperlink.RequestNavigateEvent, new System.Windows.Navigation.RequestNavigateEventHandler(Editor_RequestNavigate));
+        CommandManager.AddPreviewExecutedHandler(Editor, Editor_PreviewExecuted);
         PreviewKeyDown += Window_PreviewKeyDown;
         PreviewDragOver += Window_PreviewDragOver;
         PreviewDrop += Window_PreviewDrop;
@@ -165,6 +166,13 @@ public partial class MainWindow : Window
     private void Editor_SelectionChanged(object sender, RoutedEventArgs e)
     {
         if (_loading) return;
+        // Pasted paragraphs, or ones that just left a list, may have no explicit spacing yet.
+        if (Editor.Selection.Start.Paragraph is { } para && para.Parent is not ListItem && double.IsNaN(para.Margin.Bottom))
+        {
+            _loading = true;
+            try { NormalizeLooseParagraph(para); }
+            finally { _loading = false; }
+        }
         UpdateToolbarState();
     }
 

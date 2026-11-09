@@ -216,6 +216,9 @@ internal static class SelfTest
         var link = runs.Single(r => r.Link != null);
         Check(link.Text == "de website" && link.Link == "https://example.com/write" && link.Props.StyleId == Id2(model, "Hyperlink"), "hyperlink saved with the Hyperlink style", log);
         Check(paras.Count(p => p.List != null && p.List.Format.IsBullet()) == 3, "three bullet items saved", log);
+        Check(paras.Where(p => p.List != null).All(p => p.Props.StyleId == Id("List Paragraph")), "list items saved with the List Paragraph style", log);
+        var overview = Find("Een overzicht");
+        Check(overview.Props.StyleId == null && overview.List == null && overview.Props == model.Styles.ResolvePara(null), "the paragraph after the list is a normal paragraph again", log);
         var table = model.Blocks.OfType<TableBlock>().FirstOrDefault();
         Check(table != null && table.Rows.Count == 3 && table.Rows.All(r => r.Cells.Count == 3), "table 3×3 saved", log);
         Check(table!.Rows[1].Cells[2].Blocks.OfType<Para>().Single().Text == "docx, rtf en txt", "table text saved", log);

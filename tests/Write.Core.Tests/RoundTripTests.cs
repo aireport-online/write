@@ -121,6 +121,15 @@ public class RoundTripTests
     }
 
     [Fact]
+    public void ContextualSpacingIsKnownPerStyle()
+    {
+        var blank = DocModel.CreateBlank();
+        Assert.True(blank.Styles.HasContextualSpacing("ListParagraph"));
+        Assert.False(blank.Styles.HasContextualSpacing(null));
+        Assert.Equal("nl-NL", blank.Styles.DefaultLanguage);
+    }
+
+    [Fact]
     public void PandocFixtureKeepsFootnoteAndMath()
     {
         var original = Fixture("pandoc.docx");

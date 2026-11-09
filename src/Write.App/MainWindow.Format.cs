@@ -356,16 +356,55 @@ public partial class MainWindow
         TidyListsAtSelection();
     }
 
-    /// <summary>Lists made by the editor get the same indentation as lists that come from a document.</summary>
+    /// <summary>
+    /// After a list command: lists made by the editor get the same indentation as lists that come
+    /// from a document, and paragraphs that left a list get their normal spacing back.
+    /// </summary>
     private void TidyListsAtSelection()
     {
-        for (var list = FlowWalker.Ancestor<List>(Editor.Selection.Start.Paragraph); list != null; list = FlowWalker.Ancestor<List>(list.Parent))
+        bool wasLoading = _loading;
+        _loading = true; // bookkeeping, not an edit
+        try
         {
-            if (list.Tag is ListTag) continue;
-            if (double.IsNaN(list.Margin.Top) || double.IsNaN(list.Margin.Bottom) || double.IsNaN(list.Margin.Left))
-                list.Margin = new Thickness(0);
-            if (double.IsNaN(list.Padding.Left)) list.Padding = new Thickness(48, 0, 0, 0);
+            foreach (var para in FlowWalker.SelectedParagraphs(Editor.Selection))
+            {
+                for (var list = FlowWalker.Ancestor<List>(para); list != null; list = FlowWalker.Ancestor<List>(list.Parent))
+                {
+                    if (list.Tag is ListTag) continue;
+                    if (double.IsNaN(list.Margin.Top) || double.IsNaN(list.Margin.Bottom) || double.IsNaN(list.Margin.Left))
+                        list.Margin = new Thickness(0);
+                    if (double.IsNaN(list.Padding.Left)) list.Padding = new Thickness(48, 0, 0, 0);
+                }
+                NormalizeLooseParagraph(para);
+            }
         }
+        finally
+        {
+            _loading = wasLoading;
+        }
+    }
+
+    /// <summary>
+    /// A paragraph outside a list whose spacing is left to the editor ("auto") would be shown with a
+    /// blank line above and below. Give it the spacing of its style, which is also what gets saved.
+    /// </summary>
+    private void NormalizeLooseParagraph(Paragraph para)
+    {
+        if (para.Parent is ListItem) return;
+        var m = para.Margin;
+        if (!double.IsNaN(m.Top) && !double.IsNaN(m.Bottom) && !double.IsNaN(m.Left) && !double.IsNaN(m.Right)) return;
+        var props = (para.Tag as ParaTag)?.Precise ?? _doc.Styles.ResolvePara(null);
+        para.Margin = new Thickness(double.IsNaN(m.Left) ? 0 : m.Left, 0, double.IsNaN(m.Right) ? 0 : m.Right, FlowFormat.Dip(props.After));
+        var pad = para.Padding;
+        if (double.IsNaN(pad.Top) || pad.Top == 0) para.Padding = new Thickness(0, FlowFormat.Dip(props.Before), 0, 0);
+    }
+
+    private void Editor_PreviewExecuted(object sender, ExecutedRoutedEventArgs e)
+    {
+        // List commands also arrive from the keyboard (Tab in a list, Ctrl+Shift+L); tidy up afterwards.
+        if (e.Command == EditingCommands.ToggleBullets || e.Command == EditingCommands.ToggleNumbering ||
+            e.Command == EditingCommands.IncreaseIndentation || e.Command == EditingCommands.DecreaseIndentation)
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input, new Action(TidyListsAtSelection));
     }
 
     private void Indent_Click(object sender, RoutedEventArgs e) => ChangeIndent(+1);
