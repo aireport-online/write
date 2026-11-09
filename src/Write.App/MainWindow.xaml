@@ -1,0 +1,354 @@
+<Window x:Class="Write.Desktop.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Write" Width="1180" Height="820" MinWidth="640" MinHeight="420"
+        WindowStartupLocation="CenterScreen" AllowDrop="True"
+        Icon="pack://application:,,,/Assets/write.ico"
+        UseLayoutRounding="True" TextOptions.TextFormattingMode="Ideal">
+    <DockPanel>
+        <Menu DockPanel.Dock="Top" x:Name="MainMenu">
+            <MenuItem Header="_Bestand" x:Name="FileMenu" SubmenuOpened="FileMenu_Opened">
+                <MenuItem Header="_Nieuw" InputGestureText="Ctrl+N" Click="New_Click"/>
+                <MenuItem Header="_Openen…" InputGestureText="Ctrl+O" Click="Open_Click"/>
+                <MenuItem Header="_Recent geopend" x:Name="RecentMenu"/>
+                <Separator/>
+                <MenuItem Header="Op_slaan" InputGestureText="Ctrl+S" Click="Save_Click"/>
+                <MenuItem Header="Opslaan _als…" InputGestureText="Ctrl+Shift+S" Click="SaveAs_Click"/>
+                <Separator/>
+                <MenuItem Header="Pagina-_instelling…" Click="PageSetup_Click"/>
+                <MenuItem Header="Af_drukken…" InputGestureText="Ctrl+P" Click="Print_Click"/>
+                <MenuItem Header="_Exporteren als PDF…" Click="ExportPdf_Click"/>
+                <Separator/>
+                <MenuItem Header="Afsl_uiten" InputGestureText="Alt+F4" Click="Exit_Click"/>
+            </MenuItem>
+            <MenuItem Header="Be_werken">
+                <MenuItem Header="_Ongedaan maken" InputGestureText="Ctrl+Z" Click="Undo_Click"/>
+                <MenuItem Header="Op_nieuw" InputGestureText="Ctrl+Y" Click="Redo_Click"/>
+                <Separator/>
+                <MenuItem Header="_Knippen" InputGestureText="Ctrl+X" Click="Cut_Click"/>
+                <MenuItem Header="K_opiëren" InputGestureText="Ctrl+C" Click="Copy_Click"/>
+                <MenuItem Header="_Plakken" InputGestureText="Ctrl+V" Click="Paste_Click"/>
+                <MenuItem Header="Plakken als platte _tekst" InputGestureText="Ctrl+Shift+V" Click="PastePlain_Click"/>
+                <Separator/>
+                <MenuItem Header="_Alles selecteren" InputGestureText="Ctrl+A" Click="SelectAll_Click"/>
+                <Separator/>
+                <MenuItem Header="_Zoeken en vervangen…" InputGestureText="Ctrl+F" Click="Find_Click"/>
+            </MenuItem>
+            <MenuItem Header="_Invoegen">
+                <MenuItem Header="_Afbeelding…" Click="InsertImage_Click"/>
+                <MenuItem Header="_Tabel…" Click="InsertTable_Click"/>
+                <MenuItem Header="_Koppeling…" InputGestureText="Ctrl+K" Click="InsertLink_Click"/>
+                <Separator/>
+                <MenuItem Header="_Pagina-einde" InputGestureText="Ctrl+Enter" Click="PageBreak_Click"/>
+            </MenuItem>
+            <MenuItem Header="_Opmaak">
+                <MenuItem Header="_Vet" InputGestureText="Ctrl+B" Click="Bold_Click"/>
+                <MenuItem Header="_Cursief" InputGestureText="Ctrl+I" Click="Italic_Click"/>
+                <MenuItem Header="_Onderstrepen" InputGestureText="Ctrl+U" Click="Underline_Click"/>
+                <MenuItem Header="_Doorhalen" Click="Strike_Click"/>
+                <MenuItem Header="_Superscript" Click="Superscript_Click"/>
+                <MenuItem Header="Su_bscript" Click="Subscript_Click"/>
+                <Separator/>
+                <MenuItem Header="Opmaak _wissen" InputGestureText="Ctrl+Spatie" Click="ClearFormatting_Click"/>
+                <Separator/>
+                <MenuItem Header="_Afbeeldingsgrootte…" Click="ImageSize_Click"/>
+            </MenuItem>
+            <MenuItem Header="_Tabel">
+                <MenuItem Header="Tabel _invoegen…" Click="InsertTable_Click"/>
+                <Separator/>
+                <MenuItem Header="Rij _boven invoegen" Click="RowAbove_Click"/>
+                <MenuItem Header="Rij _onder invoegen" Click="RowBelow_Click"/>
+                <MenuItem Header="Kolom _links invoegen" Click="ColumnLeft_Click"/>
+                <MenuItem Header="Kolom _rechts invoegen" Click="ColumnRight_Click"/>
+                <Separator/>
+                <MenuItem Header="Rij _verwijderen" Click="DeleteRow_Click"/>
+                <MenuItem Header="_Kolom verwijderen" Click="DeleteColumn_Click"/>
+                <MenuItem Header="_Tabel verwijderen" Click="DeleteTable_Click"/>
+            </MenuItem>
+            <MenuItem Header="Bee_ld">
+                <MenuItem Header="_Inzoomen" InputGestureText="Ctrl++" Click="ZoomIn_Click"/>
+                <MenuItem Header="_Uitzoomen" InputGestureText="Ctrl+-" Click="ZoomOut_Click"/>
+                <MenuItem Header="_Ware grootte (100%)" InputGestureText="Ctrl+0" Click="ZoomReset_Click"/>
+                <Separator/>
+                <MenuItem Header="_Spellingcontrole" x:Name="SpellMenu" IsCheckable="True" Click="Spell_Click"/>
+            </MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Header="_Over Write" Click="About_Click"/>
+            </MenuItem>
+        </Menu>
+
+        <!-- Toolbar -->
+        <Border DockPanel.Dock="Top" Background="{StaticResource ChromeBrush}"
+                BorderBrush="{StaticResource ChromeLineBrush}" BorderThickness="0,1,0,1" Padding="8,5">
+            <WrapPanel x:Name="Toolbar" Orientation="Horizontal">
+                <WrapPanel.Resources>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="Orientation" Value="Horizontal"/>
+                        <Setter Property="Margin" Value="0,2"/>
+                        <Setter Property="VerticalAlignment" Value="Center"/>
+                    </Style>
+                </WrapPanel.Resources>
+
+                <StackPanel>
+                    <Button Style="{StaticResource ToolButton}" ToolTip="Nieuw (Ctrl+N)" Click="New_Click">
+                        <TextBlock Style="{StaticResource Glyph}" Text="&#xE8A5;"/>
+                    </Button>
+                    <Button Style="{StaticResource ToolButton}" ToolTip="Openen (Ctrl+O)" Click="Open_Click">
+                        <TextBlock Style="{StaticResource Glyph}" Text="&#xE8E5;"/>
+                    </Button>
+                    <Button Style="{StaticResource ToolButton}" ToolTip="Opslaan (Ctrl+S)" Click="Save_Click">
+                        <TextBlock Style="{StaticResource Glyph}" Text="&#xE74E;"/>
+                    </Button>
+                    <Button Style="{StaticResource ToolButton}" ToolTip="Afdrukken (Ctrl+P)" Click="Print_Click">
+                        <TextBlock Style="{StaticResource Glyph}" Text="&#xE749;"/>
+                    </Button>
+                    <Rectangle Style="{StaticResource ToolSeparator}"/>
+                    <Button Style="{StaticResource ToolButton}" ToolTip="Ongedaan maken (Ctrl+Z)" Click="Undo_Click">
+                        <TextBlock Style="{StaticResource Glyph}" Text="&#xE7A7;"/>
+                    </Button>
+                    <Button Style="{StaticResource ToolButton}" ToolTip="Opnieuw (Ctrl+Y)" Click="Redo_Click">
+                        <TextBlock Style="{StaticResource Glyph}" Text="&#xE7A6;"/>
+                    </Button>
+                    <Rectangle Style="{StaticResource ToolSeparator}"/>
+                </StackPanel>
+
+                <StackPanel>
+                    <ComboBox x:Name="StyleBox" Width="150" Margin="1,0" ToolTip="Alineastijl" IsTabStop="False"
+                              DisplayMemberPath="Display" SelectionChanged="StyleBox_SelectionChanged"
+                              DropDownClosed="Combo_DropDownClosed"/>
+                    <ComboBox x:Name="FontBox" Width="170" Margin="3,0,1,0" ToolTip="Lettertype" IsTabStop="False"
+                              IsEditable="True" IsTextSearchEnabled="True"
+                              SelectionChanged="FontBox_SelectionChanged" KeyDown="FontBox_KeyDown"
+                              DropDownClosed="Combo_DropDownClosed">
+                        <ComboBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel/>
+                            </ItemsPanelTemplate>
+                        </ComboBox.ItemsPanel>
+                    </ComboBox>
+                    <ComboBox x:Name="SizeBox" Width="72" Margin="3,0,1,0" ToolTip="Tekengrootte" IsTabStop="False"
+                              IsEditable="True" SelectionChanged="SizeBox_SelectionChanged" KeyDown="SizeBox_KeyDown"
+                              DropDownClosed="Combo_DropDownClosed"/>
+                    <Rectangle Style="{StaticResource ToolSeparator}"/>
+                </StackPanel>
+
+                <StackPanel>
+                    <ToggleButton x:Name="BoldButton" Style="{StaticResource ToolToggle}" ToolTip="Vet (Ctrl+B)" Click="Bold_Click">
+                        <TextBlock Style="{StaticResource LetterIcon}" Text="B" FontWeight="Bold"/>
+                    </ToggleButton>
+                    <ToggleButton x:Name="ItalicButton" Style="{StaticResource ToolToggle}" ToolTip="Cursief (Ctrl+I)" Click="Italic_Click">
+                        <TextBlock Style="{StaticResource LetterIcon}" Text="I" FontStyle="Italic"/>
+                    </ToggleButton>
+                    <ToggleButton x:Name="UnderlineButton" Style="{StaticResource ToolToggle}" ToolTip="Onderstrepen (Ctrl+U)" Click="Underline_Click">
+                        <TextBlock Style="{StaticResource LetterIcon}" Text="U" TextDecorations="Underline"/>
+                    </ToggleButton>
+                    <ToggleButton x:Name="StrikeButton" Style="{StaticResource ToolToggle}" ToolTip="Doorhalen" Click="Strike_Click">
+                        <TextBlock Style="{StaticResource LetterIcon}" Text="ab" FontSize="13" TextDecorations="Strikethrough"/>
+                    </ToggleButton>
+                    <ToggleButton x:Name="SubButton" Style="{StaticResource ToolToggle}" ToolTip="Subscript" Click="Subscript_Click">
+                        <TextBlock Style="{StaticResource LetterIcon}" FontSize="14"><Run Text="x"/><Run Text="2" FontSize="9" BaselineAlignment="Subscript"/></TextBlock>
+                    </ToggleButton>
+                    <ToggleButton x:Name="SuperButton" Style="{StaticResource ToolToggle}" ToolTip="Superscript" Click="Superscript_Click">
+                        <TextBlock Style="{StaticResource LetterIcon}" FontSize="14"><Run Text="x"/><Run Text="2" FontSize="9" BaselineAlignment="Superscript"/></TextBlock>
+                    </ToggleButton>
+
+                    <Button x:Name="FontColorButton" Style="{StaticResource ToolButton}" Width="26" Margin="3,0,0,0" ToolTip="Tekstkleur" Click="FontColor_Click">
+                        <StackPanel Orientation="Vertical" Margin="0">
+                            <TextBlock Text="A" FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="14" HorizontalAlignment="Center" Margin="0,-2,0,0"/>
+                            <Rectangle x:Name="FontColorBar" Height="3.5" Width="16" Fill="#C00000" RadiusX="1" RadiusY="1"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource ToolButton}" Width="14" Margin="0" ToolTip="Tekstkleur kiezen" Click="FontColorMore_Click" x:Name="FontColorMore">
+                        <Path Data="{StaticResource IcoChevron}" Style="{StaticResource IconPath}" Width="7" Height="4"/>
+                    </Button>
+                    <Button x:Name="HighlightButton" Style="{StaticResource ToolButton}" Width="26" Margin="3,0,0,0" ToolTip="Markeren" Click="Highlight_Click">
+                        <StackPanel Orientation="Vertical" Margin="0">
+                            <TextBlock Style="{StaticResource Glyph}" Text="&#xE7E6;" FontSize="14" Margin="0,0,0,1"/>
+                            <Rectangle x:Name="HighlightBar" Height="3.5" Width="16" Fill="#FFFF00" RadiusX="1" RadiusY="1"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource ToolButton}" Width="14" Margin="0" ToolTip="Markeerkleur kiezen" Click="HighlightMore_Click" x:Name="HighlightMore">
+                        <Path Data="{StaticResource IcoChevron}" Style="{StaticResource IconPath}" Width="7" Height="4"/>
+                    </Button>
+                    <Rectangle Style="{StaticResource ToolSeparator}"/>
+                </StackPanel>
+
+                <StackPanel>
+                    <ToggleButton x:Name="AlignLeftButton" Style="{StaticResource ToolToggle}" ToolTip="Links uitlijnen (Ctrl+L)" Click="AlignLeft_Click">
+                        <Path Data="{StaticResource IcoAlignLeft}" Style="{StaticResource IconPath}"/>
+                    </ToggleButton>
+                    <ToggleButton x:Name="AlignCenterButton" Style="{StaticResource ToolToggle}" ToolTip="Centreren (Ctrl+E)" Click="AlignCenter_Click">
+                        <Path Data="{StaticResource IcoAlignCenter}" Style="{StaticResource IconPath}"/>
+                    </ToggleButton>
+                    <ToggleButton x:Name="AlignRightButton" Style="{StaticResource ToolToggle}" ToolTip="Rechts uitlijnen (Ctrl+R)" Click="AlignRight_Click">
+                        <Path Data="{StaticResource IcoAlignRight}" Style="{StaticResource IconPath}"/>
+                    </ToggleButton>
+                    <ToggleButton x:Name="JustifyButton" Style="{StaticResource ToolToggle}" ToolTip="Uitvullen (Ctrl+J)" Click="Justify_Click">
+                        <Path Data="{StaticResource IcoJustify}" Style="{StaticResource IconPath}"/>
+                    </ToggleButton>
+                    <Rectangle Style="{StaticResource ToolSeparator}"/>
+                </StackPanel>
+
+                <StackPanel>
+                    <ToggleButton x:Name="BulletsButton" Style="{StaticResource ToolToggle}" ToolTip="Opsommingstekens" Click="Bullets_Click">
+                        <Path Data="{StaticResource IcoBullets}" Style="{StaticResource IconPath}" StrokeThickness="1.5"/>
+                    </ToggleButton>
+                    <ToggleButton x:Name="NumberingButton" Style="{StaticResource ToolToggle}" ToolTip="Nummering" Click="Numbering_Click">
+                        <Grid Width="16" Height="16">
+                            <Path Data="{StaticResource IcoListLines}" Style="{StaticResource IconPath}"/>
+                            <TextBlock Text="1" FontSize="6.5" FontFamily="Segoe UI" FontWeight="SemiBold" Margin="1.5,-0.5,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+                            <TextBlock Text="2" FontSize="6.5" FontFamily="Segoe UI" FontWeight="SemiBold" Margin="1.5,3.6,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+                            <TextBlock Text="3" FontSize="6.5" FontFamily="Segoe UI" FontWeight="SemiBold" Margin="1.5,7.7,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+                        </Grid>
+                    </ToggleButton>
+                    <Button Style="{StaticResource ToolButton}" ToolTip="Inspringing verkleinen" Click="Outdent_Click">
+                        <Path Data="{StaticResource IcoOutdent}" Style="{StaticResource IconPath}"/>
+                    </Button>
+                    <Button Style="{StaticResource ToolButton}" ToolTip="Inspringing vergroten" Click="Indent_Click">
+                        <Path Data="{StaticResource IcoIndent}" Style="{StaticResource IconPath}"/>
+                    </Button>
+                    <Button x:Name="SpacingButton" Style="{StaticResource ToolButton}" ToolTip="Regel- en alinea-afstand" Click="Spacing_Click">
+                        <Path Data="{StaticResource IcoLineSpacing}" Style="{StaticResource IconPath}"/>
+                        <Button.ContextMenu>
+                            <ContextMenu x:Name="SpacingMenu">
+                                <MenuItem Header="1,0" Tag="240" Click="LineSpacing_Click"/>
+                                <MenuItem Header="1,15" Tag="276" Click="LineSpacing_Click"/>
+                                <MenuItem Header="1,5" Tag="360" Click="LineSpacing_Click"/>
+                                <MenuItem Header="2,0" Tag="480" Click="LineSpacing_Click"/>
+                                <Separator/>
+                                <MenuItem Header="Ruimte vóór alinea toevoegen" Tag="before:240" Click="ParaSpacing_Click"/>
+                                <MenuItem Header="Ruimte vóór alinea verwijderen" Tag="before:0" Click="ParaSpacing_Click"/>
+                                <MenuItem Header="Ruimte na alinea toevoegen" Tag="after:160" Click="ParaSpacing_Click"/>
+                                <MenuItem Header="Ruimte na alinea verwijderen" Tag="after:0" Click="ParaSpacing_Click"/>
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
+                    <Rectangle Style="{StaticResource ToolSeparator}"/>
+                </StackPanel>
+
+                <StackPanel>
+                    <Button Style="{StaticResource ToolButton}" ToolTip="Koppeling invoegen (Ctrl+K)" Click="InsertLink_Click">
+                        <TextBlock Style="{StaticResource Glyph}" Text="&#xE71B;"/>
+                    </Button>
+                    <Button Style="{StaticResource ToolButton}" ToolTip="Afbeelding invoegen" Click="InsertImage_Click">
+                        <TextBlock Style="{StaticResource Glyph}" Text="&#xE8B9;"/>
+                    </Button>
+                    <Button Style="{StaticResource ToolButton}" ToolTip="Tabel invoegen" Click="InsertTable_Click">
+                        <Path Data="{StaticResource IcoTable}" Style="{StaticResource IconPath}"/>
+                    </Button>
+                    <Button Style="{StaticResource ToolButton}" ToolTip="Pagina-einde (Ctrl+Enter)" Click="PageBreak_Click">
+                        <Path Data="{StaticResource IcoPageBreak}" Style="{StaticResource IconPath}"/>
+                    </Button>
+                    <Rectangle Style="{StaticResource ToolSeparator}"/>
+                    <Button Style="{StaticResource ToolButton}" ToolTip="Zoeken en vervangen (Ctrl+F)" Click="Find_Click">
+                        <TextBlock Style="{StaticResource Glyph}" Text="&#xE721;"/>
+                    </Button>
+                </StackPanel>
+            </WrapPanel>
+        </Border>
+
+        <!-- Status bar -->
+        <Border DockPanel.Dock="Bottom" Background="{StaticResource ChromeBrush}"
+                BorderBrush="{StaticResource ChromeLineBrush}" BorderThickness="0,1,0,0" Padding="12,3">
+            <DockPanel LastChildFill="False">
+                <TextBlock x:Name="StatusWords" DockPanel.Dock="Left" VerticalAlignment="Center" Foreground="#4A4F54" FontSize="12" Text="0 woorden"/>
+                <TextBlock x:Name="StatusInfo" DockPanel.Dock="Left" VerticalAlignment="Center" Foreground="#4A4F54" FontSize="12" Margin="18,0,0,0"/>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Style="{StaticResource ToolButton}" Width="24" Height="24" ToolTip="Uitzoomen" Click="ZoomOut_Click">
+                        <TextBlock Text="−" FontSize="15" Margin="0,-3,0,0"/>
+                    </Button>
+                    <Slider x:Name="ZoomSlider" Width="120" Minimum="25" Maximum="300" Value="100" VerticalAlignment="Center"
+                            IsMoveToPointEnabled="True" Focusable="False" ValueChanged="ZoomSlider_ValueChanged"/>
+                    <Button Style="{StaticResource ToolButton}" Width="24" Height="24" ToolTip="Inzoomen" Click="ZoomIn_Click">
+                        <TextBlock Text="+" FontSize="15" Margin="0,-3,0,0"/>
+                    </Button>
+                    <TextBlock x:Name="ZoomText" Width="42" TextAlignment="Right" VerticalAlignment="Center" Foreground="#4A4F54" FontSize="12" Text="100%"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Workspace -->
+        <Grid Background="{StaticResource WorkspaceBrush}">
+            <ScrollViewer x:Name="Scroller" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Visible" Focusable="False">
+                <Border x:Name="PageBorder" Background="White" Margin="28,24,28,40" HorizontalAlignment="Center" VerticalAlignment="Top"
+                        BorderBrush="#D3D7DA" BorderThickness="1">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="14" ShadowDepth="2" Direction="270" Opacity="0.14" Color="#000000"/>
+                    </Border.Effect>
+                    <RichTextBox x:Name="Editor" BorderThickness="0" Padding="0" Background="White" Foreground="Black"
+                                 AcceptsTab="True" AcceptsReturn="True" IsDocumentEnabled="True"
+                                 IsInactiveSelectionHighlightEnabled="True" AllowDrop="True"
+                                 SelectionChanged="Editor_SelectionChanged" TextChanged="Editor_TextChanged"
+                                 PreviewKeyDown="Editor_PreviewKeyDown" PreviewMouseWheel="Editor_PreviewMouseWheel">
+                        <RichTextBox.Template>
+                            <ControlTemplate TargetType="RichTextBox">
+                                <Border Background="{TemplateBinding Background}">
+                                    <ScrollViewer x:Name="PART_ContentHost" Focusable="False"
+                                                  HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Disabled"/>
+                                </Border>
+                            </ControlTemplate>
+                        </RichTextBox.Template>
+                        <RichTextBox.ContextMenu>
+                            <ContextMenu x:Name="EditorMenu" Opened="EditorMenu_Opened">
+                                <MenuItem Header="Knippen" InputGestureText="Ctrl+X" Click="Cut_Click"/>
+                                <MenuItem Header="Kopiëren" InputGestureText="Ctrl+C" Click="Copy_Click"/>
+                                <MenuItem Header="Plakken" InputGestureText="Ctrl+V" Click="Paste_Click"/>
+                                <MenuItem Header="Plakken als platte tekst" Click="PastePlain_Click"/>
+                                <Separator/>
+                                <MenuItem Header="Koppeling…" Click="InsertLink_Click"/>
+                                <MenuItem Header="Koppeling verwijderen" x:Name="RemoveLinkItem" Click="RemoveLink_Click"/>
+                                <MenuItem Header="Afbeeldingsgrootte…" x:Name="ImageSizeItem" Click="ImageSize_Click"/>
+                                <Separator x:Name="TableSeparator"/>
+                                <MenuItem Header="Rij onder invoegen" x:Name="CtxRowBelow" Click="RowBelow_Click"/>
+                                <MenuItem Header="Kolom rechts invoegen" x:Name="CtxColRight" Click="ColumnRight_Click"/>
+                                <MenuItem Header="Rij verwijderen" x:Name="CtxDelRow" Click="DeleteRow_Click"/>
+                                <MenuItem Header="Kolom verwijderen" x:Name="CtxDelCol" Click="DeleteColumn_Click"/>
+                            </ContextMenu>
+                        </RichTextBox.ContextMenu>
+                    </RichTextBox>
+                </Border>
+            </ScrollViewer>
+
+            <!-- Find and replace -->
+            <Border x:Name="FindBar" Visibility="Collapsed" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,10,30,0"
+                    Background="White" BorderBrush="{StaticResource ChromeLineBrush}" BorderThickness="1" CornerRadius="8" Padding="12">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="18" ShadowDepth="3" Direction="270" Opacity="0.18"/>
+                </Border.Effect>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="230"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Zoeken" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBox x:Name="FindText" Grid.Row="0" Grid.Column="1" KeyDown="FindText_KeyDown" TextChanged="FindText_TextChanged"/>
+                    <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" Margin="6,0,0,0">
+                        <Button Style="{StaticResource ToolButton}" Focusable="True" ToolTip="Vorige (Shift+Enter)" Click="FindPrevious_Click">
+                            <TextBlock Style="{StaticResource Glyph}" Text="&#xE70E;" FontSize="12"/>
+                        </Button>
+                        <Button Style="{StaticResource ToolButton}" Focusable="True" ToolTip="Volgende (Enter)" Click="FindNext_Click">
+                            <TextBlock Style="{StaticResource Glyph}" Text="&#xE70D;" FontSize="12"/>
+                        </Button>
+                        <Button Style="{StaticResource ToolButton}" Focusable="True" ToolTip="Sluiten (Esc)" Click="FindClose_Click">
+                            <TextBlock Style="{StaticResource Glyph}" Text="&#xE711;" FontSize="12"/>
+                        </Button>
+                    </StackPanel>
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Vervangen door" VerticalAlignment="Center" Margin="0,8,10,0"/>
+                    <TextBox x:Name="ReplaceText" Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" KeyDown="ReplaceText_KeyDown"/>
+                    <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal" Margin="0,10,0,0">
+                        <CheckBox x:Name="FindCase" Content="Hoofdlettergevoelig" VerticalAlignment="Center" Margin="0,0,14,0"/>
+                        <Button Content="Vervangen" Click="Replace_Click" Margin="0,0,6,0"/>
+                        <Button Content="Alles vervangen" Click="ReplaceAll_Click"/>
+                        <TextBlock x:Name="FindStatus" VerticalAlignment="Center" Margin="12,0,0,0" Foreground="#5F6368"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </DockPanel>
+</Window>

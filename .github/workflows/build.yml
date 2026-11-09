@@ -1,0 +1,91 @@
+name: Build
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      DOTNET_NOLOGO: 'true'
+      DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Version
+        id: version
+        shell: pwsh
+        run: |
+          $version = ([xml](Get-Content Directory.Build.props)).Project.PropertyGroup.Version
+          "version=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "Write $version"
+
+      - name: Test the DOCX engine
+        run: dotnet test tests/Write.Core.Tests -c Release
+
+      - name: Publish application
+        run: dotnet publish src/Write.App -c Release -r win-x64 --self-contained true -o publish/app
+
+      # Starts the real application, lets it edit and save documents, and takes screenshots.
+      - name: Self-test on Windows
+        shell: pwsh
+        run: |
+          try { Set-DisplayResolution -Width 1920 -Height 1080 -Force | Out-Null } catch { Write-Host "Resolution unchanged: $_" }
+          New-Item -ItemType Directory -Force selftest | Out-Null
+          $out = (Resolve-Path selftest).Path
+          $in = (Resolve-Path tests\fixtures\rich.docx).Path
+          $p = Start-Process -FilePath publish\app\Write.exe -ArgumentList '--selftest', "`"$in`"", "`"$out`"" -PassThru
+          if (-not $p.WaitForExit(240000)) { $p.Kill(); Write-Host "Self-test timed out" }
+          if (Test-Path selftest\selftest.log) { Get-Content selftest\selftest.log }
+          if ($p.ExitCode -ne 0) { Write-Error "Self-test failed (exit code $($p.ExitCode))"; exit 1 }
+
+      - name: Upload self-test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: selftest
+          path: selftest
+          if-no-files-found: ignore
+
+      - name: Publish portable executable
+        run: >
+          dotnet publish src/Write.App -c Release -r win-x64 --self-contained true
+          -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true
+          -o publish/portable
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress | Out-Null }
+          & $iscc "/DAppVersion=${{ steps.version.outputs.version }}" installer\Write.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Copy-Item publish\portable\Write.exe "dist\Write-${{ steps.version.outputs.version }}-portable.exe"
+          Get-ChildItem dist | Format-Table Name, Length
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Write-${{ steps.version.outputs.version }}-windows
+          path: dist
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" --title "Write ${{ github.ref_name }}" --generate-notes 2>$null
+          gh release upload "${{ github.ref_name }}" (Get-ChildItem dist).FullName --clobber
