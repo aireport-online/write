@@ -348,6 +348,11 @@ public partial class MainWindow : Window
 
     internal void ScrollToTop() => Scroller.ScrollToHome();
 
+    internal void ScrollBy(double delta) => Scroller.ScrollToVerticalOffset(Scroller.VerticalOffset + delta);
+
+    /// <summary>The area that holds the page; overlays such as the find bar live here.</summary>
+    internal Grid Workspace => (Grid)Scroller.Parent;
+
     /// <summary>Does what pressing Enter does, including the bookkeeping that follows it.</summary>
     internal void PressEnter()
     {

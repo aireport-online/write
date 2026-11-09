@@ -16,6 +16,12 @@ public partial class App : Application
             return;
         }
 
+        if (e.Args.Length > 1 && e.Args[0] == "--demo")
+        {
+            Demo.Run(this, e.Args);
+            return;
+        }
+
         DispatcherUnhandledException += OnUnhandledException;
 
         var files = e.Args.Where(a => !a.StartsWith("--", StringComparison.Ordinal)).ToList();

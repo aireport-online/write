@@ -1,0 +1,73 @@
+name: Demo video
+
+# Records a guided tour of the application on Windows. The application is operated with real
+# mouse and keyboard input (Write.exe --demo) while ffmpeg records its window.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/demo-video.yml'
+      - 'src/Write.App/Demo.cs'
+
+jobs:
+  record:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      DOTNET_NOLOGO: 'true'
+      DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install ffmpeg
+        run: choco install ffmpeg -y --no-progress
+
+      - name: Publish application
+        run: dotnet publish src/Write.App -c Release -r win-x64 --self-contained true -o publish/app
+
+      - name: Record the tour
+        shell: pwsh
+        run: |
+          try { Set-DisplayResolution -Width 1920 -Height 1080 -Force | Out-Null } catch { Write-Host "Resolution unchanged: $_" }
+          New-Item -ItemType Directory -Force demo | Out-Null
+          $out = (Resolve-Path demo).Path
+          $sample = (Resolve-Path tests\fixtures\offerte.docx).Path
+
+          $app = Start-Process -FilePath publish\app\Write.exe -ArgumentList '--demo', "`"$out`"", "`"$sample`"" -PassThru
+
+          # The application reports where its window is; record exactly that rectangle.
+          $deadline = (Get-Date).AddSeconds(60)
+          while (-not (Test-Path "$out\region.txt") -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 200 }
+          if (-not (Test-Path "$out\region.txt")) { Write-Error "The application did not start"; exit 1 }
+          $r = (Get-Content "$out\region.txt").Split(' ')
+          Write-Host "Recording $($r[2])x$($r[3]) at $($r[0]),$($r[1])"
+
+          $psi = New-Object System.Diagnostics.ProcessStartInfo
+          $psi.FileName = 'ffmpeg'
+          $psi.Arguments = "-y -hide_banner -loglevel warning -f gdigrab -framerate 20 -offset_x $($r[0]) -offset_y $($r[1]) -video_size $($r[2])x$($r[3]) -draw_mouse 1 -i desktop -t 300 -c:v libx264 -preset veryfast -crf 21 -pix_fmt yuv420p -movflags +faststart `"$out\write-demo.mp4`""
+          $psi.RedirectStandardInput = $true
+          $psi.UseShellExecute = $false
+          $ffmpeg = [System.Diagnostics.Process]::Start($psi)
+          Start-Sleep -Seconds 2
+          New-Item "$out\go.txt" -ItemType File | Out-Null
+
+          if (-not $app.WaitForExit(280000)) { $app.Kill(); Write-Host "The tour timed out" }
+          Start-Sleep -Milliseconds 400
+          $ffmpeg.StandardInput.Write('q')
+          $ffmpeg.StandardInput.Flush()
+          if (-not $ffmpeg.WaitForExit(60000)) { $ffmpeg.Kill() }
+
+          if (Test-Path "$out\demo.log") { Get-Content "$out\demo.log" }
+          Get-ChildItem $out | Format-Table Name, Length
+
+      - name: Upload video
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-video
+          path: demo
+          if-no-files-found: ignore

@@ -13,7 +13,7 @@ namespace Write.Desktop;
 
 public partial class MainWindow
 {
-    private sealed record StyleItem(string? Id, string Name, string Display, bool IsDefault);
+    internal sealed record StyleItem(string? Id, string Name, string Display, bool IsDefault);
 
     private static readonly double[] FontSizes = { 8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72 };
 
@@ -193,6 +193,22 @@ public partial class MainWindow
     internal void ToggleScriptForTest(VertAlign wanted) => ToggleScript(wanted);
 
     internal void OpenStyleList(bool open) => StyleBox.IsDropDownOpen = open;
+
+    private StyleItem? StyleByDisplay(string display) =>
+        (StyleBox.ItemsSource as List<StyleItem>)?.FirstOrDefault(i => i.Display == display);
+
+    /// <summary>The entry for a style in the open style list, e.g. "Kop 1".</summary>
+    internal FrameworkElement? StyleListEntry(string display) =>
+        StyleByDisplay(display) is { } item ? StyleBox.ItemContainerGenerator.ContainerFromItem(item) as FrameworkElement : null;
+
+    internal string? CurrentStyleDisplay => (StyleBox.SelectedItem as StyleItem)?.Display;
+
+    internal void ApplyStyleByDisplay(string display)
+    {
+        StyleBox.IsDropDownOpen = false;
+        if (StyleByDisplay(display) is { } item) ApplyStyle(item.IsDefault ? null : item.Name);
+        Editor.Focus();
+    }
 
     private void ToggleScript(VertAlign wanted)
     {

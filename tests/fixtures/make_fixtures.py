@@ -165,8 +165,88 @@ def libreoffice():
     os.remove(src)
 
 
+def offerte():
+    """A realistic business document: the one opened in the demo video."""
+    from PIL import Image, ImageDraw
+    from docx.enum.table import WD_TABLE_ALIGNMENT
+    d = Document()
+    for section in d.sections:
+        section.page_width, section.page_height = Cm(21), Cm(29.7)
+        section.left_margin = section.right_margin = Cm(2.5)
+        section.top_margin = section.bottom_margin = Cm(2.5)
+    d.styles["Normal"].font.name = "Calibri"
+    d.styles["Normal"].font.size = Pt(11)
+
+    header = d.sections[0].header.paragraphs[0]
+    header.text = "Bakker Webdesign  ·  Dorpsstraat 12, Utrecht"
+    header.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    footer = d.sections[0].footer.paragraphs[0]
+    footer.text = "Pagina "
+    add_field(footer, " PAGE ", "1")
+    footer.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+    img = Image.new("RGB", (900, 220), (15, 118, 110))
+    draw = ImageDraw.Draw(img)
+    for i in range(900):
+        t = i / 899
+        draw.line([(i, 0), (i, 220)], fill=(int(15 + 60 * t), int(118 + 90 * t), int(110 + 90 * t)))
+    draw.ellipse([640, -60, 900, 200], fill=(140, 225, 210))
+    draw.ellipse([60, 110, 300, 350], fill=(40, 150, 140))
+    buf = io.BytesIO()
+    img.save(buf, "PNG")
+    buf.seek(0)
+
+    d.add_heading("Offerte website", level=0)
+    p = d.add_paragraph("Offertenummer 2026-118  ·  9 november 2026")
+    p.runs[0].font.color.rgb = RGBColor(0x59, 0x59, 0x59)
+    d.add_picture(buf, width=Cm(16))
+
+    d.add_heading("Uw aanvraag", level=1)
+    p = d.add_paragraph("Hartelijk dank voor uw aanvraag. Hieronder vindt u ons voorstel voor een ")
+    p.add_run("nieuwe website").bold = True
+    p.add_run(" met webwinkel. De prijzen zijn ")
+    p.add_run("exclusief btw").italic = True
+    p.add_run(" en dertig dagen geldig. Meer voorbeelden staan op ")
+    add_hyperlink(p, "https://example.com/portfolio", "onze portfoliopagina")
+    p.add_run(".")
+
+    d.add_heading("Wat u krijgt", level=1)
+    for line in ("Ontwerp in uw huisstijl", "Webwinkel met iDEAL-betaling", "Een jaar onderhoud en hosting"):
+        d.add_paragraph(line, style="List Bullet")
+
+    d.add_heading("Kosten", level=1)
+    rows = [("Onderdeel", "Uren", "Bedrag"), ("Ontwerp", "24", "€ 2.160"), ("Bouw en webwinkel", "60", "€ 5.400"),
+            ("Onderhoud (1 jaar)", "", "€ 900"), ("Totaal", "", "€ 8.460")]
+    t = d.add_table(rows=len(rows), cols=3)
+    t.style = "Table Grid"
+    t.alignment = WD_TABLE_ALIGNMENT.LEFT
+    for r_i, row in enumerate(rows):
+        for c_i, value in enumerate(row):
+            cell = t.cell(r_i, c_i)
+            cell.text = value
+            run = cell.paragraphs[0].runs[0] if cell.paragraphs[0].runs else None
+            if c_i > 0:
+                cell.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.RIGHT
+            if run is not None and (r_i == 0 or r_i == len(rows) - 1):
+                run.bold = True
+            if r_i == 0:
+                shd = OxmlElement("w:shd")
+                shd.set(qn("w:val"), "clear")
+                shd.set(qn("w:color"), "auto")
+                shd.set(qn("w:fill"), "D9EAD3")
+                cell._tc.get_or_add_tcPr().append(shd)
+
+    d.add_heading("Planning", level=1)
+    for line in ("Akkoord op de offerte", "Ontwerp ter goedkeuring (week 48)", "Oplevering (week 3)"):
+        d.add_paragraph(line, style="List Number")
+    d.add_paragraph("Met vriendelijke groet,")
+    d.add_paragraph("Sanne Bakker")
+    d.save(os.path.join(here, "offerte.docx"))
+
+
 if __name__ == "__main__":
     rich()
+    offerte()
     pandoc()
     libreoffice()
     print("ok")

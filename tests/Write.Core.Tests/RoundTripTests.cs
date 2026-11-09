@@ -12,7 +12,7 @@ public class RoundTripTests
 
     public static IEnumerable<object[]> Fixtures => new[]
     {
-        new object[] { "rich.docx" }, new object[] { "pandoc.docx" }, new object[] { "libreoffice.docx" },
+        new object[] { "rich.docx" }, new object[] { "pandoc.docx" }, new object[] { "libreoffice.docx" }, new object[] { "offerte.docx" },
     };
 
     [Fact]

@@ -20,11 +20,23 @@ public partial class MainWindow
 
     // ---- new / open --------------------------------------------------------------------------
 
+    /// <summary>How far a new window is placed from the one it was opened from.</summary>
+    internal static double CascadeOffset = 28;
+
+    internal string? CurrentPath => _path;
+
+    private MainWindow NewCascadedWindow() => new()
+    {
+        WindowStartupLocation = WindowStartupLocation.Manual,
+        Left = Left + CascadeOffset,
+        Top = Top + CascadeOffset,
+        Topmost = Topmost,
+    };
+
     private void New_Click(object sender, RoutedEventArgs e)
     {
         if (IsPristine) return;
-        var window = new MainWindow { Left = Left + 28, Top = Top + 28 };
-        window.Show();
+        NewCascadedWindow().Show();
     }
 
     private void Open_Click(object sender, RoutedEventArgs e)
@@ -42,7 +54,7 @@ public partial class MainWindow
             OpenPath(path);
             return;
         }
-        var window = new MainWindow { Left = Left + 28, Top = Top + 28 };
+        var window = NewCascadedWindow();
         window.Show();
         if (!window.OpenPath(path)) window.Close();
     }
