@@ -3,6 +3,8 @@
 Een tekstverwerker voor Windows die Word-documenten (`.docx`) opent, bewerkt en opslaat.
 Write is een native Windows-toepassing (C# / .NET / WPF): geen browser, geen Electron.
 
+![Write met een nieuw document](docs/screenshots/1-nieuw-document.png)
+
 ## Wat het kan
 
 - **Word-documenten openen en opslaan** (`.docx`), plus `.rtf` en `.txt`.
@@ -40,6 +42,15 @@ Beperkingen in deze versie:
 - Een inhoudsopgave wordt gewone tekst; in Word kan hij opnieuw worden ingevoegd.
 - Zwevende afbeeldingen staan in Write in de tekstregel; in het bestand behouden ze hun
   plaatsing zolang hun grootte niet wordt gewijzigd.
+
+## Schermafbeeldingen
+
+De afbeeldingen komen uit de zelftest van de build: het echte venster op Windows.
+
+| | |
+| --- | --- |
+| ![Stijlen kiezen](docs/screenshots/2-stijlen.png) Stijlen | ![Een bestaand Word-document](docs/screenshots/3-bestaand-document.png) Een bestaand Word-document |
+| ![Zoeken en vervangen](docs/screenshots/4-zoeken-en-vervangen.png) Zoeken en vervangen | |
 
 ## Installeren
 
