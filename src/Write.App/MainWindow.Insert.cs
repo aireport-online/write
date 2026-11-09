@@ -106,6 +106,13 @@ public partial class MainWindow
         if (!url.Contains(':') && !url.StartsWith('#')) url = "https://" + url;
         if (text.Length == 0) text = url;
 
+        InsertLink(existing, text, url);
+    }
+
+    /// <summary>Inserts a hyperlink at the selection, or updates <paramref name="existing"/>.</summary>
+    internal void InsertLink(Hyperlink? existing, string text, string url)
+    {
+        var selection = Editor.Selection;
         var styleId = _doc.Styles.EnsureBuiltIn("Hyperlink", "character");
         var color = FlowFormat.Brush(_doc.Styles.ResolveRun(null, styleId).Color);
 
@@ -532,6 +539,7 @@ public partial class MainWindow
             double width = at < table.Columns.Count && table.Columns[at].Width.IsAbsolute ? table.Columns[at].Width.Value : 96;
             if (table.Columns.Count >= columns)
                 table.Columns.Insert(Math.Min(target, table.Columns.Count), new TableColumn { Width = new GridLength(width) });
+            FitColumns(table);
             NormalizeBorders(table);
         }
         finally
@@ -539,6 +547,19 @@ public partial class MainWindow
             Editor.EndChange();
         }
         MarkDirty();
+    }
+
+    /// <summary>Narrows the columns proportionally when a top-level table has grown wider than the text area.</summary>
+    private void FitColumns(Table table)
+    {
+        if (FlowWalker.Ancestor<TableCell>(table.Parent) != null) return;
+        double available = FlowFormat.Dip(_page.ContentWidth);
+        double total = table.Columns.Sum(c => c.Width.IsAbsolute ? c.Width.Value : 0);
+        if (total <= available + 0.5 || total <= 0) return;
+        double factor = available / total;
+        foreach (var column in table.Columns)
+            if (column.Width.IsAbsolute)
+                column.Width = new GridLength(Math.Floor(column.Width.Value * factor * 15) / 15);
     }
 
     private void DeleteRow_Click(object sender, RoutedEventArgs e)

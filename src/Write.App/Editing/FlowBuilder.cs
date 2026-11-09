@@ -274,7 +274,12 @@ internal sealed class FlowBuilder
             FontStyle = props.Italic ? FontStyles.Italic : FontStyles.Normal,
             Foreground = FlowFormat.Brush(props.Color),
         };
-        var alignment = BaselineAlignment.TextBottom;
+        // An embedded element rests with its bottom edge on the baseline; pull it down by the
+        // font's descent so its text lines up with the text around it.
+        var family = block.FontFamily;
+        double descent = Math.Max(0, size * (FlowFormat.LineSpacingOf(family) - family.Baseline));
+        block.Margin = new Thickness(0, 0, 0, -descent);
+        var alignment = BaselineAlignment.Baseline;
         switch (raw.Kind)
         {
             case RawKind.Field:
@@ -285,14 +290,14 @@ internal sealed class FlowBuilder
             case RawKind.Endnote:
                 block.FontSize = size * FlowFormat.ScriptScale;
                 block.Foreground = FlowFormat.Brush("0F766E");
-                block.Margin = new Thickness(0, 0, 1, size * 0.4);
+                block.Margin = new Thickness(0, 0, 1, size * 0.35);
                 block.ToolTip = raw.Kind == RawKind.Footnote ? "Voetnoot (blijft behouden)" : "Eindnoot (blijft behouden)";
                 break;
             case RawKind.Object:
                 block.Background = FlowFormat.Brush("EEF0F2");
                 block.Foreground = FlowFormat.Brush("5F6368");
                 block.FontSize = size * 0.85;
-                block.Padding = new Thickness(6, 1, 6, 1);
+                block.Padding = new Thickness(6, 0, 6, 0);
                 block.ToolTip = "Vorm, tekstvak of ander object – blijft behouden, niet bewerkbaar";
                 break;
             case RawKind.Math:

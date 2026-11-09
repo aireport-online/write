@@ -101,15 +101,16 @@ public partial class MainWindow
             UnderlineButton.IsChecked = FlowFormat.Has(decorations, TextDecorationLocation.Underline);
             StrikeButton.IsChecked = FlowFormat.Has(decorations, TextDecorationLocation.Strikethrough);
             var baseline = selection.GetPropertyValue(System.Windows.Documents.Inline.BaselineAlignmentProperty);
-            SubButton.IsChecked = baseline is BaselineAlignment.Subscript;
-            SuperButton.IsChecked = baseline is BaselineAlignment.Superscript;
+            var script = FlowFormat.ScriptOf(baseline);
+            SubButton.IsChecked = script == VertAlign.Subscript;
+            SuperButton.IsChecked = script == VertAlign.Superscript;
 
             var family = selection.GetPropertyValue(TextElement.FontFamilyProperty) as FontFamily;
             FontBox.Text = family != null ? FlowFormat.FontName(family) : "";
 
             if (selection.GetPropertyValue(TextElement.FontSizeProperty) is double size)
             {
-                if (baseline is BaselineAlignment.Subscript or BaselineAlignment.Superscript) size /= FlowFormat.ScriptScale;
+                if (script != VertAlign.None) size /= FlowFormat.ScriptScale;
                 SizeBox.Text = FormatSize(Math.Round(size * 72 / 96 * 2) / 2);
             }
             else SizeBox.Text = "";
@@ -185,16 +186,21 @@ public partial class MainWindow
         Apply(System.Windows.Documents.Inline.TextDecorationsProperty, FlowFormat.Decorations(underline, strike) ?? new TextDecorationCollection());
     }
 
-    private void Subscript_Click(object sender, RoutedEventArgs e) => ToggleScript(BaselineAlignment.Subscript);
+    private void Subscript_Click(object sender, RoutedEventArgs e) => ToggleScript(VertAlign.Subscript);
 
-    private void Superscript_Click(object sender, RoutedEventArgs e) => ToggleScript(BaselineAlignment.Superscript);
+    private void Superscript_Click(object sender, RoutedEventArgs e) => ToggleScript(VertAlign.Superscript);
 
-    private void ToggleScript(BaselineAlignment target)
+    internal void ToggleScriptForTest(VertAlign wanted) => ToggleScript(wanted);
+
+    internal void OpenStyleList(bool open) => StyleBox.IsDropDownOpen = open;
+
+    private void ToggleScript(VertAlign wanted)
     {
         var selection = Editor.Selection;
-        var current = selection.GetPropertyValue(System.Windows.Documents.Inline.BaselineAlignmentProperty);
-        bool wasScript = current is BaselineAlignment.Subscript or BaselineAlignment.Superscript;
-        bool turnOff = current is BaselineAlignment b && b == target;
+        var current = FlowFormat.ScriptOf(selection.GetPropertyValue(System.Windows.Documents.Inline.BaselineAlignmentProperty));
+        bool wasScript = current != VertAlign.None;
+        bool turnOff = current == wanted;
+        var target = wanted == VertAlign.Superscript ? FlowFormat.SuperAlignment : FlowFormat.SubAlignment;
         double? size = selection.GetPropertyValue(TextElement.FontSizeProperty) is double s ? s : null;
 
         Editor.BeginChange();
@@ -257,7 +263,7 @@ public partial class MainWindow
         points = Math.Round(points * 2) / 2;
         double dip = points * 96 / 72;
         var baseline = Editor.Selection.GetPropertyValue(System.Windows.Documents.Inline.BaselineAlignmentProperty);
-        if (baseline is BaselineAlignment.Subscript or BaselineAlignment.Superscript) dip *= FlowFormat.ScriptScale;
+        if (FlowFormat.ScriptOf(baseline) != VertAlign.None) dip *= FlowFormat.ScriptScale;
         Apply(TextElement.FontSizeProperty, dip);
     }
 
@@ -443,12 +449,24 @@ public partial class MainWindow
     private void StyleBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_syncing || StyleBox.SelectedItem is not StyleItem item) return;
-        string? id = item.IsDefault ? null : item.Id ?? _doc.Styles.EnsureBuiltIn(item.Name);
-        if (!item.IsDefault && id == null) return;
-        bool added = !item.IsDefault && item.Id == null;
+        ApplyStyle(item.IsDefault ? null : item.Name);
+    }
 
+    /// <summary>
+    /// Applies a paragraph style, given by its invariant name ("heading 1"), to the selected
+    /// paragraphs; null means the default style. A built-in style the document lacks is added.
+    /// </summary>
+    internal void ApplyStyle(string? name)
+    {
+        string? id = null;
+        if (name != null)
+        {
+            bool existed = _doc.Styles.FindByName(name) != null;
+            id = _doc.Styles.EnsureBuiltIn(name);
+            if (id == null) return;
+            if (!existed) PopulateStyles();
+        }
         ForSelectedParagraphs(p => ApplyParagraphStyle(p, id));
-        if (added) PopulateStyles();
         UpdateToolbarState();
     }
 }

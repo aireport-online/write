@@ -77,6 +77,8 @@ public sealed class StyleSheet
 
     public IReadOnlyList<StyleDef> Styles => _ordered;
     public string? DefaultParagraphStyleId { get; private set; }
+    /// <summary>The document's default proofing language (e.g. "nl-NL"), when it names one.</summary>
+    public string? DefaultLanguage { get; private set; }
 
     public static StyleSheet Parse(XDocument doc, Theme? theme)
     {
@@ -97,6 +99,7 @@ public sealed class StyleSheet
         var defaults = root.W("docDefaults");
         _defaultRPr = RunPartial.Parse(defaults.W("rPrDefault").W("rPr"), Theme);
         _defaultPPr = ParaPartial.Parse(defaults.W("pPrDefault").W("pPr"));
+        DefaultLanguage = defaults.W("rPrDefault").W("rPr").W("lang").WA("val");
 
         foreach (var e in root.Ws("style"))
         {

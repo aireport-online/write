@@ -11,6 +11,17 @@ internal static class FlowFormat
     /// <summary>Font scale used to show superscript and subscript text.</summary>
     public const double ScriptScale = 0.65;
 
+    /// <summary>How superscript text is raised: its top lines up with the top of the surrounding text.</summary>
+    public const BaselineAlignment SuperAlignment = BaselineAlignment.TextTop;
+    public const BaselineAlignment SubAlignment = BaselineAlignment.Subscript;
+
+    public static VertAlign ScriptOf(object? baselineAlignment) => baselineAlignment switch
+    {
+        BaselineAlignment.Superscript or BaselineAlignment.TextTop or BaselineAlignment.Top => VertAlign.Superscript,
+        BaselineAlignment.Subscript => VertAlign.Subscript,
+        _ => VertAlign.None,
+    };
+
     public static double Dip(int twips) => twips / 15.0;
     public static int Twips(double dip) => double.IsNaN(dip) || double.IsInfinity(dip) ? 0 : (int)Math.Round(dip * 15.0);
     public static double SizeDip(int halfPoints) => halfPoints * 2.0 / 3.0;
@@ -255,20 +266,15 @@ internal static class FlowFormat
         {
             var decorations = Decorations(props.Underline, props.Strike);
             if (decorations != null) inline.TextDecorations = decorations;
-            if (props.Vert == VertAlign.Superscript) inline.BaselineAlignment = BaselineAlignment.Superscript;
-            else if (props.Vert == VertAlign.Subscript) inline.BaselineAlignment = BaselineAlignment.Subscript;
+            if (props.Vert == VertAlign.Superscript) inline.BaselineAlignment = SuperAlignment;
+            else if (props.Vert == VertAlign.Subscript) inline.BaselineAlignment = SubAlignment;
         }
     }
 
     /// <summary>Reads the effective character formatting of a run. StyleId stays null.</summary>
     public static RunProps ReadRun(System.Windows.Documents.Inline run, bool ambientUnderline = false, bool ambientStrike = false)
     {
-        var vert = run.BaselineAlignment switch
-        {
-            BaselineAlignment.Superscript => VertAlign.Superscript,
-            BaselineAlignment.Subscript => VertAlign.Subscript,
-            _ => VertAlign.None,
-        };
+        var vert = ScriptOf(run.BaselineAlignment);
         double size = run.FontSize;
         if (vert != VertAlign.None) size /= ScriptScale;
         var decorations = run.TextDecorations;

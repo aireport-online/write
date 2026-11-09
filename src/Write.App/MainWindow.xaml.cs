@@ -42,6 +42,9 @@ public partial class MainWindow : Window
         PreviewDragOver += Window_PreviewDragOver;
         PreviewDrop += Window_PreviewDrop;
 
+        // The editor resets the page padding of its document while it loads; set it again afterwards.
+        Editor.Loaded += (_, _) => ApplyPageLayout();
+
         LoadModel(DocModel.CreateBlank(), null);
         SetZoom(Math.Clamp(settings.Zoom, 0.25, 3.0));
         SpellMenu.IsChecked = settings.SpellCheck;
@@ -63,7 +66,8 @@ public partial class MainWindow : Window
             _page = doc.Page;
             _path = path;
             var flow = new FlowBuilder(doc).Build();
-            try { flow.Language = XmlLanguage.GetLanguage(CultureInfo.CurrentUICulture.IetfLanguageTag); }
+            // Spell checking follows the language of the document, not that of Windows.
+            try { flow.Language = XmlLanguage.GetLanguage(doc.Styles.DefaultLanguage ?? CultureInfo.CurrentUICulture.IetfLanguageTag); }
             catch (ArgumentException) { }
             Editor.Document = flow;
             ApplyPageLayout();

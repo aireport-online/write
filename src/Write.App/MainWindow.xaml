@@ -113,10 +113,10 @@
                 </StackPanel>
 
                 <StackPanel>
-                    <ComboBox x:Name="StyleBox" Width="150" Margin="1,0" ToolTip="Alineastijl" IsTabStop="False"
+                    <ComboBox x:Name="StyleBox" Width="136" Margin="1,0" ToolTip="Alineastijl" IsTabStop="False"
                               DisplayMemberPath="Display" SelectionChanged="StyleBox_SelectionChanged"
                               DropDownClosed="Combo_DropDownClosed"/>
-                    <ComboBox x:Name="FontBox" Width="170" Margin="3,0,1,0" ToolTip="Lettertype" IsTabStop="False"
+                    <ComboBox x:Name="FontBox" Width="160" Margin="3,0,1,0" ToolTip="Lettertype" IsTabStop="False"
                               IsEditable="True" IsTextSearchEnabled="True"
                               SelectionChanged="FontBox_SelectionChanged" KeyDown="FontBox_KeyDown"
                               DropDownClosed="Combo_DropDownClosed">
@@ -126,7 +126,7 @@
                             </ItemsPanelTemplate>
                         </ComboBox.ItemsPanel>
                     </ComboBox>
-                    <ComboBox x:Name="SizeBox" Width="72" Margin="3,0,1,0" ToolTip="Tekengrootte" IsTabStop="False"
+                    <ComboBox x:Name="SizeBox" Width="68" Margin="3,0,1,0" ToolTip="Tekengrootte" IsTabStop="False"
                               IsEditable="True" SelectionChanged="SizeBox_SelectionChanged" KeyDown="SizeBox_KeyDown"
                               DropDownClosed="Combo_DropDownClosed"/>
                     <Rectangle Style="{StaticResource ToolSeparator}"/>
