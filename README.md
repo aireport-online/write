@@ -1,5 +1,11 @@
 # Write
 
+## Over deze publicatie
+
+Deze broncode is gedeeld bij de AI Report-masterclass over software bouwen met AI.
+Je kunt het project bestuderen, zelf draaien, forken en aanpassen onder de [MIT-licentie](LICENSE).
+Dit is een voorbeeldproject uit de masterclass; er wordt geen gehoste dienst of doorlopend onderhoud aangeboden.
+
 Een tekstverwerker voor Windows die Word-documenten (`.docx`) opent, bewerkt en opslaat.
 Write is een native Windows-toepassing (C# / .NET / WPF): geen browser, geen Electron.
 
